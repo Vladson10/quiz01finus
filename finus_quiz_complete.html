@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Finus - Você tem controle do seu dinheiro?</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #E8F5F0 0%, #D1F0E6 100%);
+            min-height: 100vh;
+            padding: 15px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 40px rgba(0, 217, 163, 0.15);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .logo h1 {
+            color: #2D3748;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .logo span {
+            color: #00D9A3;
+            font-weight: 800;
+        }
+
+        .question-container {
+            display: none;
+        }
+
+        .question-container.active {
+            display: block;
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #E2E8F0;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00D9A3, #00C896);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .question-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2D3748;
+            margin-bottom: 22px;
+            line-height: 1.5;
+            letter-spacing: -0.01em;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            background: #F7FAFC;
+            border: 2px solid #E2E8F0;
+            border-radius: 14px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #2D3748;
+            line-height: 1.4;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .option:active {
+            transform: scale(0.98);
+        }
+
+        .option:hover {
+            border-color: #00D9A3;
+            background: #E8F9F5;
+        }
+
+        .emoji {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .result-page, .objection-page, .roulette-page {
+            display: none;
+            text-align: center;
+        }
+
+        .result-page.active, .objection-page.active, .roulette-page.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .roulette-container {
+            margin: 30px 0;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .roulette-wrapper {
+            position: relative;
+            width: 280px;
+            height: 280px;
+        }
+
+        .roulette {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 10px solid #00D9A3;
+            position: relative;
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            box-shadow: 0 8px 30px rgba(0, 217, 163, 0.25);
+            overflow: hidden;
+        }
+
+        .roulette-slice {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            clip-path: polygon(50% 50%, 50% 0%, 100% 0%);
+            transform-origin: center;
+        }
+
+        .slice-yellow {
+            background: #FFD93D;
+            transform: rotate(0deg);
+            clip-path: polygon(50% 50%, 50% 0%, 100% 30%, 90% 70%, 50% 100%);
+        }
+
+        .slice-green {
+            background: #00D9A3;
+            transform: rotate(72deg);
+            clip-path: polygon(50% 50%, 93% 25%, 93% 75%);
+        }
+
+        .slice-lime {
+            background: #6BCB77;
+            transform: rotate(144deg);
+            clip-path: polygon(50% 50%, 93% 25%, 93% 75%);
+        }
+
+        .slice-blue {
+            background: #4D96FF;
+            transform: rotate(216deg);
+            clip-path: polygon(50% 50%, 93% 25%, 93% 75%);
+        }
+
+        .slice-red {
+            background: #FF6B6B;
+            transform: rotate(288deg);
+            clip-path: polygon(50% 50%, 93% 25%, 93% 75%);
+        }
+
+        .roulette svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .percentage-label {
+            position: absolute;
+            font-weight: 800;
+            font-size: 20px;
+            color: white;
+            text-shadow: 0 3px 10px rgba(0,0,0,0.6);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Posicionamento EXATO baseado na imagem de referência */
+
+        /* 75% - Vermelho (topo esquerda) */
+        .label-75 {
+            top: 24%;
+            left: 28%;
+        }
+
+        /* 50% - Amarelo (topo direita) */
+        .label-50 {
+            top: 24%;
+            right: 23%;
+            font-size: 24px;
+        }
+
+        /* 100% - Azul (centro esquerda) */
+        .label-100 {
+            top: 50%;
+            left: 15%;
+            transform: translateY(-50%);
+        }
+
+        /* 10% - Verde (centro direita) */
+        .label-10 {
+            top: 50%;
+            right: 15%;
+            transform: translateY(-50%);
+        }
+
+        /* 25% - Verde Claro (embaixo centro) */
+        .label-25 {
+            bottom: 24%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .roulette-pointer {
+            width: 0;
+            height: 0;
+            border-left: 18px solid transparent;
+            border-right: 18px solid transparent;
+            border-top: 35px solid #2D3748;
+            position: absolute;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+        }
+
+        .roulette-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 800;
+            color: #00D9A3;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 5;
+        }
+
+        .spin-button, .cta-button {
+            background: linear-gradient(135deg, #00D9A3, #00C896);
+            color: white;
+            border: none;
+            padding: 18px 35px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+            display: block;
+            -webkit-tap-highlight-color: transparent;
+            text-decoration: none;
+            line-height: 1.4;
+        }
+
+        .spin-button:active, .cta-button:active {
+            transform: scale(0.98);
+        }
+
+        .spin-button:disabled {
+            background: #CBD5E0;
+            cursor: not-allowed;
+        }
+
+        .discount-reveal {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .discount-reveal.active {
+            display: block;
+            animation: bounceIn 0.6s ease;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .discount-badge {
+            background: linear-gradient(135deg, #FFD93D, #FFA500);
+            color: #2D3748;
+            font-size: 56px;
+            font-weight: 800;
+            padding: 25px;
+            border-radius: 18px;
+            display: inline-block;
+            margin: 15px 0;
+            box-shadow: 0 10px 30px rgba(255, 217, 61, 0.4);
+        }
+
+        .timer {
+            font-size: 48px;
+            font-weight: 800;
+            color: #FF6B6B;
+            margin: 20px 0;
+            font-family: 'Inter', sans-serif;
+            text-shadow: 0 2px 4px rgba(255, 107, 107, 0.2);
+        }
+
+        .timer-label {
+            font-size: 15px;
+            font-weight: 600;
+            color: #4A5568;
+            margin-bottom: 8px;
+        }
+
+        .benefits {
+            text-align: left;
+            margin: 25px 0;
+            background: #F7FAFC;
+            padding: 20px;
+            border-radius: 14px;
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #2D3748;
+            line-height: 1.5;
+        }
+
+        .checkmark {
+            color: #00D9A3;
+            font-size: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        h2 {
+            color: #2D3748;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+
+        h3 {
+            color: #2D3748;
+            font-size: 19px;
+            font-weight: 700;
+            margin: 18px 0;
+            line-height: 1.4;
+        }
+
+        .alert-box {
+            background: linear-gradient(135deg, #00D9A3, #00C896);
+            color: white;
+            padding: 20px;
+            border-radius: 14px;
+            margin: 20px 0;
+        }
+
+        .alert-box h3 {
+            color: white;
+        }
+
+        .warning-emoji {
+            font-size: 42px;
+            margin-bottom: 12px;
+        }
+
+        .objection-benefits {
+            text-align: left;
+            margin: 25px 0;
+        }
+
+        .objection-benefit {
+            background: #F7FAFC;
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border-left: 4px solid #00D9A3;
+        }
+
+        .objection-benefit h4 {
+            color: #00D9A3;
+            margin-bottom: 6px;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .objection-benefit p {
+            color: #4A5568;
+            font-size: 14px;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 25px 18px;
+                border-radius: 16px;
+            }
+
+            .logo h1 {
+                font-size: 24px;
+            }
+
+            .question-title {
+                font-size: 17px;
+            }
+
+            h2 {
+                font-size: 24px;
+            }
+
+            h3 {
+                font-size: 17px;
+            }
+
+            .discount-badge {
+                font-size: 48px;
+                padding: 20px;
+            }
+
+            .roulette-wrapper {
+                width: 240px;
+                height: 240px;
+            }
+
+            .timer {
+                font-size: 40px;
+            }
+
+            .option {
+                font-size: 14px;
+                padding: 14px;
+            }
+
+            .label-50 {
+                font-size: 20px;
+                top: 22%;
+                right: 21%;
+            }
+
+            .label-75 {
+                top: 22%;
+                left: 26%;
+            }
+
+            .percentage-label {
+                font-size: 17px;
+            }
+
+            .label-10 {
+                top: 50%;
+                right: 13%;
+            }
+
+            .label-100 {
+                top: 50%;
+                left: 13%;
+            }
+
+            .label-25 {
+                bottom: 22%;
+            }
+
+            .spin-button, .cta-button {
+                font-size: 15px;
+                padding: 16px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>💰 <span>Finus+</span></h1>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar" style="width: 14.28%"></div>
+        </div>
+
+        <!-- Pergunta 1 -->
+        <div class="question-container active" id="q1">
+            <div class="question-title">
+                🧠 Você já teve que pedir dinheiro emprestado ou passar sufoco no fim do mês porque o salário "sumiu"?
+            </div>
+            <div class="options">
+                <div class="option" onclick="nextQuestion(1)">
+                    <span class="emoji">⚠️</span>
+                    <span>Sim, já aconteceu (e não quero que se repita)</span>
+                </div>
+                <div class="option" onclick="nextQuestion(1)">
+                    <span class="emoji">😰</span>
+                    <span>Às vezes fico no aperto</span>
+                </div>
+                <div class="option" onclick="nextQuestion(1)">
+                    <span class="emoji">✅</span>
+                    <span>Não, sempre me organizo bem</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pergunta 2 -->
+        <div class="question-container" id="q2">
+            <div class="question-title">
+                📊 Se você pudesse ver EXATAMENTE para onde vai cada centavo do seu salário (supermercado, delivery, assinaturas que você esqueceu...), isso mudaria alguma coisa na sua vida?
+            </div>
+            <div class="options">
+                <div class="option" onclick="nextQuestion(2)">
+                    <span class="emoji">💡</span>
+                    <span>Sim, eu ia cortar muita coisa desnecessária</span>
+                </div>
+                <div class="option" onclick="nextQuestion(2)">
+                    <span class="emoji">📈</span>
+                    <span>Com certeza me ajudaria a economizar</span>
+                </div>
+                <div class="option" onclick="nextQuestion(2)">
+                    <span class="emoji">🤔</span>
+                    <span>Não sei, nunca pensei nisso</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pergunta 3 -->
+        <div class="question-container" id="q3">
+            <div class="question-title">
+                💸 ALERTA: Estudos mostram que quem não controla suas finanças perde em média R$200/mês com gastos "invisíveis". Isso são R$2.400 por ano jogados fora.<br><br>
+                Se você recuperasse esse dinheiro HOJE, o que faria com ele?
+            </div>
+            <div class="options">
+                <div class="option" onclick="nextQuestion(3)">
+                    <span class="emoji">✈️</span>
+                    <span>Realizaria aquela viagem que sempre adio</span>
+                </div>
+                <div class="option" onclick="nextQuestion(3)">
+                    <span class="emoji">📈</span>
+                    <span>Investiria e faria meu dinheiro trabalhar pra mim</span>
+                </div>
+                <div class="option" onclick="nextQuestion(3)">
+                    <span class="emoji">🎁</span>
+                    <span>Quitaria uma dívida ou compraria algo importante</span>
+                </div>
+                <div class="option" onclick="nextQuestion(3)">
+                    <span class="emoji">💰</span>
+                    <span>Montaria uma reserva de emergência de verdade</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pergunta 4 -->
+        <div class="question-container" id="q4">
+            <div class="question-title">
+                🕓 Imagine economizar TODO esse tempo que você gasta tentando controlar seu dinheiro (planilhas, apps confusos, contas que não batem...). Quanto tempo por semana você perde com isso?
+            </div>
+            <div class="options">
+                <div class="option" onclick="nextQuestion(4)">
+                    <span class="emoji">⏰</span>
+                    <span>Mais de 1 hora (que eu poderia estar com família, descansando...)</span>
+                </div>
+                <div class="option" onclick="nextQuestion(4)">
+                    <span class="emoji">⏱️</span>
+                    <span>Entre 30min e 1h (mas é sempre estressante)</span>
+                </div>
+                <div class="option" onclick="nextQuestion(4)">
+                    <span class="emoji">🚫</span>
+                    <span>Zero - eu desisti de tentar controlar</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pergunta 5 -->
+        <div class="question-container" id="q5">
+            <div class="question-title">
+                ⚡ Se você pudesse ter um "assistente financeiro pessoal" no bolso — que organiza tudo automaticamente, te ajuda a poupar sem esforço e responde suas dúvidas na hora — quanto isso valeria pra você?
+            </div>
+            <div class="options">
+                <div class="option" onclick="nextQuestion(5)">
+                    <span class="emoji">💎</span>
+                    <span>Muito! Eu pagaria por isso</span>
+                </div>
+                <div class="option" onclick="nextQuestion(5)">
+                    <span class="emoji">🤑</span>
+                    <span>Valeria bastante, mas depende do preço</span>
+                </div>
+                <div class="option" onclick="nextQuestion(5)">
+                    <span class="emoji">🤷</span>
+                    <span>Seria legal, mas não sei se pagaria</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pergunta 6 -->
+        <div class="question-container" id="q6">
+            <div class="question-title">
+                🎯 E se você tivesse acesso AGORA a um app que organiza tudo automaticamente (salário, metas, gastos fixos), tem um chat inteligente que registra suas despesas só de você falar E te mostra EXATAMENTE onde você pode economizar mais de R$200/mês?
+            </div>
+            <div class="options">
+                <div class="option" onclick="nextQuestion(6)">
+                    <span class="emoji">🤩</span>
+                    <span>Sim, seria incrível!</span>
+                </div>
+                <div class="option" onclick="nextQuestion(6)">
+                    <span class="emoji">🤔</span>
+                    <span>Interessante, mas quero saber mais</span>
+                </div>
+                <div class="option" onclick="nextQuestion(6)">
+                    <span class="emoji">😐</span>
+                    <span>Não me interessa muito</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pergunta 7 (CTA FINAL) -->
+        <div class="question-container" id="q7">
+            <h3 style="margin-bottom: 22px; text-align: center;">Você quer conhecer o Finus e garantir um desconto exclusivo?</h3>
+            <div class="options">
+                <div class="option" onclick="goToRoulette()">
+                    <span class="emoji">🚀</span>
+                    <span>SIM! Quero meu desconto agora</span>
+                </div>
+                <div class="option" onclick="goToObjection()">
+                    <span class="emoji">📱</span>
+                    <span>Não, quero saber mais detalhes</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Página de Objeção -->
+        <div class="objection-page" id="objectionPage">
+            <div class="warning-emoji">⚠️</div>
+            <h2>ESPERA AÍ!</h2>
+            <h3>Antes de ir embora, veja o que você está perdendo...</h3>
+
+            <div style="background: linear-gradient(135deg, #FF6B6B, #F5576C); color: white; padding: 20px; border-radius: 14px; margin: 20px 0;">
+                <h3 style="color: white; margin: 0;">💸 Você está deixando R$ 2.400 por ano escorrerem pelo ralo</h3>
+            </div>
+
+            <p style="font-size: 16px; color: #4A5568; line-height: 1.7; margin: 20px 0; font-weight: 500;">
+                A cada mês que passa SEM controlar suas finanças, você está <strong>jogando fora em média R$ 200</strong> em gastos invisíveis que poderiam estar no seu bolso.
+            </p>
+
+            <div style="background: #F7FAFC; padding: 18px; border-radius: 12px; margin: 20px 0;">
+                <p style="font-size: 15px; color: #2D3748; margin-bottom: 8px; font-weight: 600;">📅 Em 1 ano = R$ 2.400 perdidos</p>
+                <p style="font-size: 15px; color: #2D3748; font-weight: 600;">📅 Em 5 anos = R$ 12.000 que poderiam estar investidos</p>
+            </div>
+
+            <h3>❓ Ainda está em dúvida? Veja o que o Finus faz por você:</h3>
+
+            <div class="objection-benefits">
+                <div class="objection-benefit">
+                    <h4>✅ Sem complicação</h4>
+                    <p>Você só fala pro chat o que gastou e pronto. Sem planilhas chatas, sem perder tempo.</p>
+                </div>
+                <div class="objection-benefit">
+                    <h4>✅ Organização automática</h4>
+                    <p>Salário, metas, gastos fixos... tudo no lugar certo sem você precisar fazer nada.</p>
+                </div>
+                <div class="objection-benefit">
+                    <h4>✅ Economia real</h4>
+                    <p>Descubra exatamente onde seu dinheiro está vazando e economize mais de R$ 200/mês.</p>
+                </div>
+                <div class="objection-benefit">
+                    <h4>✅ No seu bolso</h4>
+                    <p>App simples, direto e que funciona no seu celular. Sem burocracia.</p>
+                </div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #FFD93D, #FFA500); color: #2D3748; padding: 20px; border-radius: 14px; margin: 20px 0;">
+                <h3 style="color: #2D3748; margin: 0;">🎁 E tem mais:</h3>
+                <p style="color: #2D3748; margin-top: 10px; font-size: 15px; font-weight: 600;">
+                    Nesta página você tem acesso a um <strong>DESCONTO EXCLUSIVO</strong> que não está disponível em nenhum outro lugar!
+                </p>
+                <p style="color: #2D3748; margin-top: 8px; font-size: 13px; font-weight: 600;">
+                    ⏰ Mas atenção: Essa oferta expira em alguns minutos...
+                </p>
+            </div>
+
+            <h3 style="margin-top: 25px;">🎰 ÚLTIMA CHANCE:</h3>
+            <button class="cta-button" onclick="goToRoulette()">
+                🔥 GIRE A ROLETA E GARANTA ATÉ 100% DE DESCONTO!
+            </button>
+
+            <p style="margin-top: 20px; color: #718096; font-size: 13px; font-weight: 500;">
+                🔒 Garantia de 7 dias | Acesso Imediato | Suporte Exclusivo
+            </p>
+
+            <p style="margin-top: 15px; color: #4A5568; font-size: 14px; font-style: italic; font-weight: 500;">
+                💭 Ou prefere continuar vendo seu dinheiro sumir todo mês?
+            </p>
+        </div>
+
+        <!-- Página da Roleta -->
+        <div class="roulette-page" id="roulettePage">
+            <h2>🎉 PARABÉNS!</h2>
+            <h3>Você está a um passo de transformar sua vida financeira!</h3>
+
+            <div class="alert-box">
+                <h3 style="margin: 0;">🎰 GIRE A ROLETA E DESCUBRA SEU DESCONTO EXCLUSIVO!</h3>
+                <p style="margin-top: 8px; font-weight: 600; font-size: 14px;">Você pode ganhar até 100% OFF no Finus hoje!</p>
+            </div>
+
+            <div class="roulette-container">
+                <div class="roulette-wrapper">
+                    <div class="roulette-pointer"></div>
+                    <div class="roulette" id="roulette">
+                        <svg viewBox="0 0 100 100">
+                            <!-- 5 fatias IGUAIS de 72 graus cada -->
+                            
+                            <!-- Amarelo 50% (topo - 0 a 72 graus) -->
+                            <path d="M 50 50 L 50 0 A 50 50 0 0 1 95.1 30.9 Z" fill="#FFD93D"/>
+                            
+                            <!-- Verde 10% (direita - 72 a 144 graus) -->
+                            <path d="M 50 50 L 95.1 30.9 A 50 50 0 0 1 79.4 90.5 Z" fill="#00D9A3"/>
+                            
+                            <!-- Verde Claro 25% (baixo direita - 144 a 216 graus) -->
+                            <path d="M 50 50 L 79.4 90.5 A 50 50 0 0 1 20.6 90.5 Z" fill="#6BCB77"/>
+                            
+                            <!-- Azul 100% (baixo esquerda - 216 a 288 graus) -->
+                            <path d="M 50 50 L 20.6 90.5 A 50 50 0 0 1 4.9 30.9 Z" fill="#4D96FF"/>
+                            
+                            <!-- Vermelho 75% (esquerda - 288 a 360/0 graus) -->
+                            <path d="M 50 50 L 4.9 30.9 A 50 50 0 0 1 50 0 Z" fill="#FF6B6B"/>
+                        </svg>
+                        
+                        <div class="percentage-label label-50">50%</div>
+                        <div class="percentage-label label-10">10%</div>
+                        <div class="percentage-label label-25">25%</div>
+                        <div class="percentage-label label-100">100%</div>
+                        <div class="percentage-label label-75">75%</div>
+                        
+                        <div class="roulette-center">GIRE</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="spin-button" id="spinButton" onclick="spinRoulette()">
+                🎰 GIRAR A ROLETA AGORA!
+            </button>
+
+            <div class="discount-reveal" id="discountReveal">
+                <h2>🎁 VOCÊ GANHOU!</h2>
+                <div class="discount-badge">50% OFF</div>
+                <h3>Seu desconto exclusivo está garantido!</h3>
+
+                <div style="margin: 25px 0;">
+                    <p class="timer-label">⏰ Esse desconto expira em:</p>
+                    <div class="timer" id="timer">15:00</div>
+                </div>
+
+                <h3>✨ O que você leva hoje com o Finus:</h3>
+                <div class="benefits">
+                    <div class="benefit-item">
+                        <span class="checkmark">✅</span>
+                        <span>Controle total das suas finanças no automático</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="checkmark">✅</span>
+                        <span>Chat inteligente que registra gastos por voz</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="checkmark">✅</span>
+                        <span>Organização de salário, metas e gastos fixos</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="checkmark">✅</span>
+                        <span>Economize mais de R$200/mês (R$2.400/ano!)</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="checkmark">✅</span>
+                        <span>Suporte exclusivo via WhatsApp</span>
+                    </div>
+                </div>
+
+                <a href="https://pay.cakto.com.br/pwz73z7_607057" class="cta-button">
+                    🚀 GARANTIR MEUS 50% DE DESCONTO AGORA!
+                </a>
+
+                <p style="margin-top: 18px; color: #718096; font-size: 12px; font-weight: 500;">
+                    ⚡ Clique acima e finalize sua compra com desconto exclusivo em menos de 2 minutos
+                </p>
+
+                <p style="margin-top: 12px; color: #718096; font-size: 13px; font-weight: 500;">
+                    🔒 Compra 100% Segura | Garantia de 7 dias | Acesso Imediato
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const totalQuestions = 7;
+
+        function nextQuestion(current) {
+            const currentContainer = document.getElementById('q' + current);
+            const nextContainer = document.getElementById('q' + (current + 1));
+            
+            if (currentContainer && nextContainer) {
+                currentContainer.classList.remove('active');
+                nextContainer.classList.add('active');
+                
+                const progress = ((current + 1) / totalQuestions) * 100;
+                document.getElementById('progressBar').style.width = progress + '%';
+            }
+        }
+
+        function goToRoulette() {
+            document.querySelectorAll('.question-container').forEach(q => q.style.display = 'none');
+            document.getElementById('objectionPage').classList.remove('active');
+            document.getElementById('roulettePage').classList.add('active');
+            document.getElementById('progressBar').style.width = '100%';
+        }
+
+        function goToObjection() {
+            document.querySelectorAll('.question-container').forEach(q => q.style.display = 'none');
+            document.getElementById('objectionPage').classList.add('active');
+        }
+
+        let hasSpun = false;
+
+        function spinRoulette() {
+            if (hasSpun) return;
+            hasSpun = true;
+
+            const button = document.getElementById('spinButton');
+            button.disabled = true;
+            button.textContent = 'GIRANDO...';
+
+            const roulette = document.getElementById('roulette');
+            const spins = 5;
+            const targetDegree = 324; // Para no 50% (AMARELO no topo direita)
+            const totalRotation = (360 * spins) + targetDegree;
+
+            roulette.style.transform = `rotate(${totalRotation}deg)`;
+
+            setTimeout(() => {
+                document.getElementById('discountReveal').classList.add('active');
+                startTimer();
+            }, 4000);
+        }
+
+        function startTimer() {
+            let timeLeft = 15 * 60; // 15 minutos em segundos
+            const timerElement = document.getElementById('timer');
+
+            const countdown = setInterval(() => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                timeLeft--;
+
+                if (timeLeft < 0) {
+                    clearInterval(countdown);
+                    timerElement.textContent = '00:00';
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
